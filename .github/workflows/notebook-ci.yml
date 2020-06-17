@@ -42,9 +42,4 @@ jobs:
 
       - name: Get changed files
         id: changed
-        run: |
-          echo "::set-output name=files::$(git diff-tree --no-commit-id --name-only -r ${{ github.sha }} | xargs)"
-
-      - name: echo output
-        run: |
-          echo ${{ steps.getfile.outputs.files }}
+        uses: trilom/file-changes-action@v1.2.3
