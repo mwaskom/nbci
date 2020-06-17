@@ -8,9 +8,10 @@ name: notebook-ci
 on: 
   pull_request:
     branches: master
-    # paths: *.ipynb  # TODO try enabling this later
+    paths: *.ipynb
   push:  # XXX adding this for debugging the workflow but see above
     branches: master
+    paths: *.ipynb
 
 env:
   NB_KERNEL: python
