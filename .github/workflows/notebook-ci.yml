@@ -1,0 +1,21 @@
+
+# I think we want one workflow that runs on pull requests and lints/checks/splits
+# just the changed notebooks, and then we want a separate one that runs on
+# pushes to master and checks all of the notebooks in the repo (but doesn't
+# lint or split)
+
+name: notebook-ci
+on: 
+  pull_request:
+    branches: master
+
+env: NB_KERNEL: pyhton
+
+
+jobs:
+
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      -uses: actions/checkout@v2
