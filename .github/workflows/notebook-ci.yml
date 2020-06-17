@@ -9,9 +9,9 @@ on:
   pull_request:
     branches: master
     paths: '**/*.ipynb'
-  push:  # XXX adding this for debugging the workflow but see above
-    branches: master
-    paths: '**/*.ipynb'
+  # push:  # XXX adding this for debugging the workflow but see above
+  #   branches: master
+  #   paths: '**/*.ipynb'
 
 env:
   NB_KERNEL: python
@@ -43,5 +43,21 @@ jobs:
         with:
           output: " "
 
-      - name : Process notebooks
+      - name: Process notebooks
+        id: process
         run: python ci/process_notebooks.py ${{ steps.changes.outputs.files}}
+
+      - name: Commit post-processed notebooks
+        id: commit
+        needs: process
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action" 
+          git add '**/*.ipynb'
+          git commit -m "Generate student and TA notebooks"
+
+      - name: Push post-processed notebooks
+        needs: commit
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
