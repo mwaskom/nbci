@@ -43,4 +43,4 @@ jobs:
           output: " "
 
       - name : Print changed files
-        run: cat $HOME/files.json
+        run: echo '${{ steps.file_changes.outputs.files}}'
