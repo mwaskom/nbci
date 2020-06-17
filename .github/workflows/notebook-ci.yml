@@ -9,7 +9,8 @@ on:
   pull_request:
     branches: master
 
-env: NB_KERNEL: pyhton
+env:
+  NB_KERNEL: python
 
 
 jobs:
