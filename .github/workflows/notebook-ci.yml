@@ -26,10 +26,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Sanity check
-        run: echo $PYTHON_VERSION
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: $PYTHON_VERSION
+          python-version: ${{ PYTHON_VERSION }}
