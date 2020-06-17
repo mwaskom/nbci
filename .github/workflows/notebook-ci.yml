@@ -40,8 +40,10 @@ jobs:
           pip install -r requirements.txt
           pip install nbconvert
 
-      - name: Clear font cache  # So xkcd fonts work
-        run: rm -f $HOME/.matplotlib/fontList.cache
+      - name: Install XKCD fonts
+        run: |
+          sudo apt-get install fonts-humor-sans
+          rm -f $HOME/.matplotlib/fontList.cache
 
       - name: Get changed files
         id: changes
