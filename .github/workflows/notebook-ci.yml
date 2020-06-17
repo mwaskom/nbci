@@ -53,12 +53,13 @@ jobs:
         if: ${{ success() }}
         run: |
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action" 
+          git config --local user.name "GitHub Action"
           git add '**/*.ipynb'
           git commit -m "Generate student and TA notebooks"
 
       - name: Push post-processed notebooks
         if: ${{ success() }}
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
