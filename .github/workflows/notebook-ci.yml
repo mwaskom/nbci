@@ -40,6 +40,11 @@ jobs:
           pip install -r requirements.txt
           pip install nbconvert
 
+      - name: Install XKCD fonts
+        run: |
+          sudo apt-get install fonts-humor-sans
+          rm -f $HOME/.matplotlib/fontList.cache
+
       - name: Get changed files
         id: changes
         uses: trilom/file-changes-action@v1.2.4
