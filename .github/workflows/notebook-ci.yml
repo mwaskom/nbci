@@ -38,9 +38,10 @@ jobs:
           # XXX pip install nbconvert treon
 
       - name: Get changed files
+        id: changes
         uses: trilom/file-changes-action@v1.2.3
         with:
           output: " "
 
       - name : Print changed files
-        run: echo '${{ steps.file_changes.outputs.files}}'
+        run: echo '${{ steps.changes.outputs.files}}'
