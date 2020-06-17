@@ -52,23 +52,21 @@ def main(arglist):
 
         nb_dir, nb_fname = os.path.split(nb_path)
 
+        # TODO only save out a solutions notebook if some solutions exist?
+
         # Create a directory for the solutions, if it doesn't exist
         solutions_dir = os.path.join(nb_dir, "solutions")
         if not os.path.exists(solutions_dir):
             os.mkdir(solutions_dir)
 
-        # Write the full notebook to the solutions directory
+        # Write the full notebook (TA verison) to the solutions directory
         solutions_path = os.path.join(solutions_dir, nb_fname)
         print(f"Writing TA notebook to {solutions_path}")
         with open(solutions_path, "w") as f:
             nbformat.write(nb, f)
 
-        # Remove solutions, but don't let errors break the build
-        try:
-            remove_solutions(nb_path, nb)
-        except Exception as error:
-            print("Encountered error while removing solutions:")
-            print(error)
+        # Remove solutions and write the student version of the notebook
+        remove_solutions(nb_path, nb)
 
     exit(errors)
 
