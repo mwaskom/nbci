@@ -8,6 +8,8 @@ name: notebook-ci
 on: 
   pull_request:
     branches: master
+  push:  # TODO adding this for debugging the workflow but see above
+    branches: master
 
 env:
   NB_KERNEL: python
