@@ -44,4 +44,4 @@ jobs:
           output: " "
 
       - name : Process notebooks
-        run: python ci/process_notebooks.py '${{ steps.changes.outputs.files}}'
+        run: python ci/process_notebooks.py ${{ steps.changes.outputs.files}}
