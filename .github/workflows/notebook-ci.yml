@@ -39,6 +39,8 @@ jobs:
 
       - name: Get changed files
         uses: trilom/file-changes-action@v1.2.3
+        with:
+          output: " "
 
       - name : Print changed files
         run: cat $HOME/files.json
