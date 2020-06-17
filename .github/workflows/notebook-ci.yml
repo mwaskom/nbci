@@ -42,7 +42,7 @@ jobs:
 
       - name: Install XKCD fonts
         run: |
-          sudo apt-get install fonts-humor-sans
+          sudo apt install ttf-mscorefonts-installer
           rm -f $HOME/.matplotlib/fontList.cache
 
       - name: Get changed files
