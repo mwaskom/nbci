@@ -40,6 +40,9 @@ jobs:
           pip install -r requirements.txt
           pip install nbconvert
 
+      - name: Clear font cache  # So xkcd fonts work
+        run: rm -f $HOME/.matplotlib/fontList.cache
+
       - name: Get changed files
         id: changes
         uses: trilom/file-changes-action@v1.2.4
