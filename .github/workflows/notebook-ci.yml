@@ -39,5 +39,4 @@ jobs:
 
       - name: Show changed files
         run: |
-          git diff-tree --no-commit-id --name-only -r ${{ github.sha }} > files.txt
-          echo `cat files.txt`
+          git diff-tree --no-commit-id --name-only -r ${{ github.sha }}
