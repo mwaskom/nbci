@@ -44,12 +44,10 @@ jobs:
           output: " "
 
       - name: Process notebooks
-        id: process
         run: python ci/process_notebooks.py ${{ steps.changes.outputs.files}}
 
       - name: Commit post-processed notebooks
-        id: commit
-        needs: process
+        if: ${{ success() }}
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action" 
@@ -57,7 +55,7 @@ jobs:
           git commit -m "Generate student and TA notebooks"
 
       - name: Push post-processed notebooks
-        needs: commit
+        if: ${{ success() }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
