@@ -13,6 +13,7 @@ on:
 
 env:
   NB_KERNEL: python
+  PYTHON_VERISON: 3.7
 
 
 jobs:
@@ -24,3 +25,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: $PYTHON_VERSION
