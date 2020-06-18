@@ -1,3 +1,10 @@
+"""Process tutorials for Neuromatch Academy
+
+- Excute .ipynb files and report any errors encountered
+- Copy the original notebook to a "solutions" folder for TAs
+- Remove inputs (but not outputs) from solution cells in original notebook
+
+"""
 import os
 import sys
 import argparse
