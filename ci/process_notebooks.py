@@ -52,45 +52,53 @@ def main(arglist):
         else:
             notebooks[nb_path] = nb
 
-    if args.checkonly:
+    if errors or args.checkonly:
         exit(errors)
 
-    # TODO should we exit here if there are errors?
-
-    # Check compliancy with PEP8, generate a report, but don't fail on issues
+    # TODO Check compliancy with PEP8, generate a report, but don't fail
 
     # TODO Check notebook name format?
 
-    # Save the full version of the notebook, which contains solutions
+    # Remove solution code from notebooks and write out a "student" version
+    # TODO only save out a solutions notebook if some solutions exist?
     for nb_path, nb in notebooks.items():
 
         nb_dir, nb_fname = os.path.split(nb_path)
 
-        # TODO only save out a solutions notebook if some solutions exist?
-
         # Create subdirectories, if they don't exist
-        solutions_dir = make_sub_dir(nb_dir, "solutions")
+        student_dir = make_sub_dir(nb_dir, "student")
         static_dir = make_sub_dir(nb_dir, "static")
 
-        # Write the full notebook (TA verison) to the solutions directory
-        solutions_path = os.path.join(solutions_dir, nb_fname)
-        print(f"Writing TA notebook to {solutions_path}")
-        with open(solutions_path, "w") as f:
-            nbformat.write(nb, f)
-
         # Remove solutions and write the student version of the notebook
-        remove_solutions(nb_path, nb, static_dir)
+        print(f"Removing solutions from {nb_path}")
+        student_nb, solution_resources = remove_solutions(nb)
+
+        # Write the full notebook (TA verison) to the solutions directory
+        student_nb_path = os.path.join(student_dir, nb_fname)
+        print(f"Writing student notebook to {student_nb_path}")
+        with open(student_nb_path, "w") as f:
+            nbformat.write(student_nb, f)
+
+        # Write the static files representing solutions for student notebooks
+        print(f"Writing solution resources to {static_dir}")
+        for fname, imdata in solution_resources.items():
+            fname = fname.replace("../static", static_dir)
+            with open(fname, "wb") as f:
+                f.write(imdata)
+
+        # TODO write out the executed version of the complete notebook?
+        # I don't think we wnat to overwrite the incoming notebook, so
+        # we should do this only if we have a "flat" organization
 
     exit(errors)
 
 
-def remove_solutions(nb_path, nb, static_dir="static"):
+def remove_solutions(nb):
     """Convert solution cells to markdown; embed images from Python output."""
-    print(f"Removing solutions from {nb_path}")
 
-    # Extract image data from the cell outputs
+    # -- Extract image data from the cell outputs
     c = Config()
-    template = "static/solution_hint_{cell_index}_{index}{extension}"
+    template = "../static/solution_hint_{cell_index}_{index}{extension}"
     c.ExtractOutputPreprocessor.output_filename_template = template
 
     exporter = RSTExporter()
@@ -98,11 +106,11 @@ def remove_solutions(nb_path, nb, static_dir="static"):
     exporter.register_preprocessor(extractor, True)
     _, resources = exporter.from_notebook_node(nb)
 
-    # Convert solution cells to markdown with embedded image
-    outputs = resources["outputs"]
-    solution_outputs = {}
-
+    # -- Convert solution cells to markdown with embedded image
     nb_cells = nb.get("cells", [])
+    outputs = resources["outputs"]
+    solution_resources = {}
+
     for i, cell in enumerate(nb_cells):
         cell_text = cell["source"].replace(" ", "").lower()
         if cell_text.startswith("#@titlesolution"):
@@ -113,7 +121,7 @@ def remove_solutions(nb_path, nb, static_dir="static"):
 
             # Filter the resources for solution images
             image_paths = [k for k in outputs if f"solution_hint_{i}" in k]
-            solution_outputs.update({k: outputs[k] for k in image_paths})
+            solution_resources.update({k: outputs[k] for k in image_paths})
 
             # Embed the image (as a link to static resource) in markdown cell
             new_source = "**Example output:**\n\n" + "\n\n".join([
@@ -124,15 +132,7 @@ def remove_solutions(nb_path, nb, static_dir="static"):
             del cell["outputs"]
             del cell["execution_count"]
 
-    # Write the static files
-    for fname, imdata in solution_outputs.items():
-        fname = fname.replace("static", static_dir)
-        with open(fname, "wb") as f:
-            f.write(imdata)
-
-    # Write the processed notebook back out to the original path
-    with open(nb_path, "w") as f:
-        nbformat.write(nb, f)
+    return nb, solution_resources
 
 
 def make_sub_dir(nb_dir, name):
