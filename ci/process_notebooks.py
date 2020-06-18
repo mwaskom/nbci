@@ -101,6 +101,10 @@ def remove_solutions(nb):
     template = "../static/solution_hint_{cell_index}_{index}{extension}"
     c.ExtractOutputPreprocessor.output_filename_template = template
 
+    # Note: using the RST exporter means we need to install pandoc as a dep
+    # in the github workflow, which adds a little bit of latency, and we don't
+    # actually care about the RST output. It's just a convenient way to get the
+    # image resources the way we want them.
     exporter = RSTExporter()
     extractor = ExtractOutputPreprocessor(config=c)
     exporter.register_preprocessor(extractor, True)
