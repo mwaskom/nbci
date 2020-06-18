@@ -62,7 +62,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add '**/*.ipynb'
-          git commit -m "Generate student and TA notebooks"
+          git add '**/static/*.png'
+          git commit -m "Generate student notebooks"
 
       - name: Push post-processed notebooks
         if: ${{ success() }}
