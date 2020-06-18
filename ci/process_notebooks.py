@@ -9,7 +9,12 @@ import os
 import sys
 import argparse
 import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
+from traitlets.config import Config
+from nbconvert.exporters import RSTExporter
+from nbconvert.preprocessors import (
+    ExecutePreprocessor,
+    ExtractOutputPreprocessor
+)
 
 
 def main(arglist):
@@ -50,6 +55,8 @@ def main(arglist):
     if args.checkonly:
         exit(errors)
 
+    # TODO should we exit here if there are errors?
+
     # Check compliancy with PEP8, generate a report, but don't fail on issues
 
     # TODO Check notebook name format?
@@ -61,10 +68,9 @@ def main(arglist):
 
         # TODO only save out a solutions notebook if some solutions exist?
 
-        # Create a directory for the solutions, if it doesn't exist
-        solutions_dir = os.path.join(nb_dir, "solutions")
-        if not os.path.exists(solutions_dir):
-            os.mkdir(solutions_dir)
+        # Create subdirectories, if they don't exist
+        solutions_dir = make_sub_dir(nb_dir, "solutions")
+        static_dir = make_sub_dir(nb_dir, "static")
 
         # Write the full notebook (TA verison) to the solutions directory
         solutions_path = os.path.join(solutions_dir, nb_fname)
@@ -73,33 +79,72 @@ def main(arglist):
             nbformat.write(nb, f)
 
         # Remove solutions and write the student version of the notebook
-        remove_solutions(nb_path, nb)
+        remove_solutions(nb_path, nb, static_dir)
 
     exit(errors)
 
 
-def remove_solutions(nb_path, nb):
-    """Remove input source from solution cells with output, or remove cell."""
+def remove_solutions(nb_path, nb, static_dir="static"):
+    """Convert solution cells to markdown; embed images from Python output."""
     print(f"Removing solutions from {nb_path}")
 
-    # Remove the solutions, but keep images they generate
-    removed_message = "# Solution removed, here is the example output:"
+    # Extract image data from the cell outputs
+    c = Config()
+    template = "static/solution_hint_{cell_index}_{index}{extension}"
+    c.ExtractOutputPreprocessor.output_filename_template = template
+
+    exporter = RSTExporter()
+    extractor = ExtractOutputPreprocessor(config=c)
+    exporter.register_preprocessor(extractor, True)
+    _, resources = exporter.from_notebook_node(nb)
+
+    # Convert solution cells to markdown with embedded image
+    outputs = resources["outputs"]
+    solution_outputs = {}
+
     nb_cells = nb.get("cells", [])
-    for cell in nb_cells:
+    for i, cell in enumerate(nb_cells):
         cell_text = cell["source"].replace(" ", "").lower()
         if cell_text.startswith("#@titlesolution"):
-            if cell["outputs"]:
-                cell["source"] = removed_message
-            else:
+
+            if not cell["outputs"]:
                 nb_cells.remove(cell)
+                continue
+
+            # Filter the resources for solution images
+            image_paths = [k for k in outputs if f"solution_hint_{i}" in k]
+            solution_outputs.update({k: outputs[k] for k in image_paths})
+
+            # Embed the image (as a link to static resource) in markdown cell
+            new_source = "**Example output:**\n\n" + "\n\n".join([
+                f"<img src='{f}' align='left'>" for f in image_paths
+            ])
+            cell["source"] = new_source
+            cell["cell_type"] = "markdown"
+            del cell["outputs"]
+            del cell["execution_count"]
+
+    # Write the static files
+    for fname, imdata in solution_outputs.items():
+        fname = fname.replace("static", static_dir)
+        with open(fname, "wb") as f:
+            f.write(imdata)
 
     # Write the processed notebook back out to the original path
     with open(nb_path, "w") as f:
         nbformat.write(nb, f)
 
 
+def make_sub_dir(nb_dir, name):
+
+    sub_dir = os.path.join(nb_dir, name)
+    if not os.path.exists(sub_dir):
+        os.mkdir(sub_dir)
+    return sub_dir
+
+
 def exit(errors):
-    """Exit with message and status dependent on contents of erros dictionary."""
+    """Exit with message and status dependent on contents of errors dict."""
     for failed_file, error in errors.items():
         print(f"{failed_file} did not execute cleanly.")
         print("Error message:", end="\n")
