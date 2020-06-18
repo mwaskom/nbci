@@ -42,6 +42,10 @@ def main(arglist):
         with open(nb_path) as f:
             nb = nbformat.read(f, nbformat.NO_CONVERT)
 
+        if not sequentially_executed(nb):
+            errors[nb_path] = "Notebook is not sequentially executed."
+            continue
+
         # Run the notebook from top to bottom, catching errors
         print(f"Executing {nb_path}")
         executor = ExecutePreprocessor(**exec_kws)
@@ -139,8 +143,20 @@ def remove_solutions(nb):
     return nb, solution_resources
 
 
-def make_sub_dir(nb_dir, name):
+def sequentially_executed(nb):
+    """Return True if notebook appears freshly executed from top-to-bottom."""
+    exec_counts = [
+        cell["execution_count"]
+        for cell in nb.get("cells", [])
+        if cell.get("execution_count", None) is not None
+    ]
+    sequential_counts = list(range(1, 1 + len(exec_counts)))
+    # Returns True if there are no executed code cells, which is fine?
+    return exec_counts == sequential_counts
 
+
+def make_sub_dir(nb_dir, name):
+    """Create nb_dir/name if it does not exist."""
     sub_dir = os.path.join(nb_dir, name)
     if not os.path.exists(sub_dir):
         os.mkdir(sub_dir)
@@ -150,15 +166,12 @@ def make_sub_dir(nb_dir, name):
 def exit(errors):
     """Exit with message and status dependent on contents of errors dict."""
     for failed_file, error in errors.items():
-        print(f"{failed_file} did not execute cleanly.")
-        print("Error message:", end="\n")
+        print(f"{failed_file} failed quality control.")
         print(error)
 
     status = bool(errors)
-    if status:
-        print("========== Failure ==========")
-    else:
-        print("========== Success ==========")
+    report = "Failure" if status else "Success"
+    print("=" * 30, report, "=" * 30)
     sys.exit(status)
 
 
