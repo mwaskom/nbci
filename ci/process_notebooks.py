@@ -43,8 +43,9 @@ def main(arglist):
             nb = nbformat.read(f, nbformat.NO_CONVERT)
 
         if not sequentially_executed(nb):
-            errors[nb_path] = "Notebook is not sequentially executed."
-            continue
+            if args.require_sequntial:
+                errors[nb_path] = "Notebook is not sequentially executed."
+                continue
 
         # Run the notebook from top to bottom, catching errors
         print(f"Executing {nb_path}")
@@ -56,7 +57,7 @@ def main(arglist):
         else:
             notebooks[nb_path] = nb
 
-    if errors or args.checkonly:
+    if errors or args.check_only:
         exit(errors)
 
     # TODO Check compliancy with PEP8, generate a report, but don't fail
@@ -148,7 +149,10 @@ def sequentially_executed(nb):
     exec_counts = [
         cell["execution_count"]
         for cell in nb.get("cells", [])
-        if cell.get("execution_count", None) is not None
+        if (
+            cell["source"]
+            and cell.get("execution_count", None) is not None
+        )
     ]
     sequential_counts = list(range(1, 1 + len(exec_counts)))
     # Returns True if there are no executed code cells, which is fine?
@@ -186,9 +190,16 @@ def parse_args(arglist):
         help="File name(s) to process. Will filter for .ipynb extension."
     )
     parser.add_argument(
-        "--checkonly",
+        "--check-only",
         action="store_true",
-        help="Only check that the notebook can execute"
+        dest="check_only",
+        help="Only run QC checks; don't do post-processing"
+    )
+    parser.add_argument(
+        "--allow-non-sequential",
+        action="store_false",
+        dest="require_sequntial",
+        help="Don't fail if the notebook is not sequentially executed"
     )
     return parser.parse_args(arglist)
 
