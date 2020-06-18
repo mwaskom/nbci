@@ -69,6 +69,7 @@ def main(arglist):
     for nb_path, nb in notebooks.items():
 
         nb_dir, nb_fname = os.path.split(nb_path)
+        nb_name, _ = os.path.splitext(nb_fname)
 
         # Create subdirectories, if they don't exist
         student_dir = make_sub_dir(nb_dir, "student")
@@ -76,7 +77,7 @@ def main(arglist):
 
         # Remove solutions and write the student version of the notebook
         print(f"Removing solutions from {nb_path}")
-        student_nb, solution_resources = remove_solutions(nb)
+        student_nb, solution_resources = remove_solutions(nb, nb_name)
 
         # Write the full notebook (TA verison) to the solutions directory
         student_nb_path = os.path.join(student_dir, nb_fname)
@@ -98,12 +99,14 @@ def main(arglist):
     exit(errors)
 
 
-def remove_solutions(nb):
+def remove_solutions(nb, nb_name):
     """Convert solution cells to markdown; embed images from Python output."""
 
     # -- Extract image data from the cell outputs
     c = Config()
-    template = "../static/solution_hint_{cell_index}_{index}{extension}"
+    template = (
+        "../static/{nb_name}_Solution_Hint_{cell_index}_{index}{extension}"
+    )
     c.ExtractOutputPreprocessor.output_filename_template = template
 
     # Note: using the RST exporter means we need to install pandoc as a dep
@@ -129,7 +132,7 @@ def remove_solutions(nb):
                 continue
 
             # Filter the resources for solution images
-            image_paths = [k for k in outputs if f"solution_hint_{i}" in k]
+            image_paths = [k for k in outputs if f"Solution_Hint_{i}" in k]
             solution_resources.update({k: outputs[k] for k in image_paths})
 
             # Embed the image (as a link to static resource) in markdown cell
