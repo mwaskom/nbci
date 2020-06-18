@@ -105,7 +105,8 @@ def remove_solutions(nb, nb_name):
     # -- Extract image data from the cell outputs
     c = Config()
     template = (
-        "../static/{nb_name}_Solution_Hint_{cell_index}_{index}{extension}"
+        f"../static/{nb_name}"
+        "_Solution_Hint_{cell_index}_{index}{extension}"
     )
     c.ExtractOutputPreprocessor.output_filename_template = template
 
