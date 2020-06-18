@@ -106,7 +106,7 @@ def remove_solutions(nb, nb_name):
     c = Config()
     template = (
         f"../static/{nb_name}"
-        "_Solution_Hint_{cell_index}_{index}{extension}"
+        "_Solution_{cell_index}_{index}{extension}"
     )
     c.ExtractOutputPreprocessor.output_filename_template = template
 
@@ -133,7 +133,7 @@ def remove_solutions(nb, nb_name):
                 continue
 
             # Filter the resources for solution images
-            image_paths = [k for k in outputs if f"Solution_Hint_{i}" in k]
+            image_paths = [k for k in outputs if f"Solution_{i}" in k]
             solution_resources.update({k: outputs[k] for k in image_paths})
 
             # Embed the image (as a link to static resource) in markdown cell
