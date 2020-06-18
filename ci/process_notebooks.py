@@ -1,8 +1,12 @@
 """Process tutorials for Neuromatch Academy
 
-- Excute .ipynb files and report any errors encountered
-- Copy the original notebook to a "solutions" folder for TAs
-- Remove inputs (but not outputs) from solution cells in original notebook
+- Filter input file list for .ipynb files
+- Check that the cells have been executed sequentially on a fresh kernel
+- Execute the notebook and report any errors encountered
+- Remove solution cells but retain any images they generated as static content
+- Write the executed version of the input notebook to its original path
+- Write the post-processed notebook to a student/ subdirectory
+- Write solution images to a static/ subdirectory
 
 """
 import os
@@ -63,9 +67,9 @@ def main(arglist):
     # TODO Check compliancy with PEP8, generate a report, but don't fail
 
     # TODO Check notebook name format?
+    # (If implemented, update the CI workflow to only run on tutorials)
 
     # Remove solution code from notebooks and write out a "student" version
-    # TODO only save out a solutions notebook if some solutions exist?
     for nb_path, nb in notebooks.items():
 
         nb_dir, nb_fname = os.path.split(nb_path)
@@ -75,11 +79,10 @@ def main(arglist):
         student_dir = make_sub_dir(nb_dir, "student")
         static_dir = make_sub_dir(nb_dir, "static")
 
-        # Remove solutions and write the student version of the notebook
+        # Generate the student version and save it to a subdirectory
         print(f"Removing solutions from {nb_path}")
         student_nb, solution_resources = remove_solutions(nb, nb_name)
 
-        # Write the full notebook (TA verison) to the solutions directory
         student_nb_path = os.path.join(student_dir, nb_fname)
         print(f"Writing student notebook to {student_nb_path}")
         with open(student_nb_path, "w") as f:
@@ -92,9 +95,9 @@ def main(arglist):
             with open(fname, "wb") as f:
                 f.write(imdata)
 
-        # TODO write out the executed version of the complete notebook?
-        # I don't think we wnat to overwrite the incoming notebook, so
-        # we should do this only if we have a "flat" organization
+        # Write out the executed version of the original notebook
+        with open(nb_path, "w") as f:
+            nbformat.write(nb, f)
 
     exit(errors)
 
@@ -128,6 +131,7 @@ def remove_solutions(nb, nb_name):
         cell_text = cell["source"].replace(" ", "").lower()
         if cell_text.startswith("#@titlesolution"):
 
+            # Just remove solution cells that generate no outputs
             if not cell["outputs"]:
                 nb_cells.remove(cell)
                 continue
@@ -136,7 +140,8 @@ def remove_solutions(nb, nb_name):
             image_paths = [k for k in outputs if f"Solution_{i}" in k]
             solution_resources.update({k: outputs[k] for k in image_paths})
 
-            # Embed the image (as a link to static resource) in markdown cell
+            # Conver the solution cell to markdown, strip the source,
+            # and embed the image as a link to static resource
             new_source = "**Example output:**\n\n" + "\n\n".join([
                 f"<img src='{f}' align='left'>" for f in image_paths
             ])
